@@ -1,4 +1,5 @@
-import { Route } from "react-router-dom";
+import React, { useState } from 'react'; 
+import { Navigate, useNavigate } from 'react-router-dom';
 
 function RegisterLoginForm({ headingText, ...props }) {
   let footerText = "Don't have an account? ";
@@ -9,13 +10,69 @@ function RegisterLoginForm({ headingText, ...props }) {
    footerLink = "/";
    footerAction = "login";
   }
+
+  const BACKEND_URL = 'http://localhost:8080'; 
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    const res = await fetch(`${BACKEND_URL}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+    if (res.ok) {
+      console.log("Registration successful");
+      // Redirect to the home page or login page
+      navigate("/login"); // Use Navigate to redirect
+    } else {
+      console.error("Registration failed");
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const res = await fetch(`${BACKEND_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include credentials for session management
+      body: JSON.stringify({ username, password }),
+    });
+    if (res.ok) {
+      //console.log("Login successful");
+      // Redirect to the player profile or home page
+      navigate("/profile"); // Use Navigate to redirect
+    } else {
+      console.error("Login failed");
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-200 via-yellow-100 to-blue-200">
+      
       <div className="w-96 bg-white rounded-3xl shadow-2xl p-10 border-4 border-yellow-300">
-        <form className="space-y-7" method="POST" action="/login">
+        
+        <form className="space-y-7"  onSubmit={ (e) =>
+          {
+            if (props.isRegisterPage) {
+            handleRegister(e);
+          } else {
+            handleLogin(e);
+          }
+        }
+        }>
+        
         <h1 className="text-center text-2xl font-bold text-blue-700 mb-5">
           {headingText || "Login"}
           </h1>
+         
           <div>
             <label className="block text-blue-700 font-bold mb-2 tracking-wide">
               Username
@@ -26,6 +83,7 @@ function RegisterLoginForm({ headingText, ...props }) {
               className="w-full px-5 py-3 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
               autoComplete="username"
               required
+              onChange={(e) => setUsername(e.target.value)} // Handle username input
             />
           </div>
           <div>
@@ -37,6 +95,7 @@ function RegisterLoginForm({ headingText, ...props }) {
               name="password"
               className="w-full px-5 py-3 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
               autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)} // Handle password input}
               required
             />
           </div>
