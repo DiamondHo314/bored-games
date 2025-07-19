@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS player (
 CREATE TABLE IF NOT EXISTS chimp_game_score (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   player_id INTEGER REFERENCES player(id),
-  score INTEGER DEFAULT NULL
+  score FLOAT DEFAULT NULL
 );
 
 INSERT INTO player (username, password) 

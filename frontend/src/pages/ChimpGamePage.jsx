@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import  { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
+const BACKEND_URL = 'http://localhost:8080'; 
 const GRID_ROWS = 4;
 const GRID_COLS = 8;
 const NUM_BUTTONS = 10;
+
+
 
 function getRandomPositions() {
   const positions = new Set();
@@ -22,6 +25,27 @@ function ChimpGamePage() {
   const [gameActive, setGameActive] = useState(false);
   const timerRef = useRef();
 
+  //checking if there is any user logged in
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/login/checkAuth`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setIsAuthenticated(false);
+      }
+    };
+  checkAuth();
+}, []);
+
   // Start/restart game
   const startGame = () => {
     setButtonPositions(getRandomPositions());
@@ -32,7 +56,7 @@ function ChimpGamePage() {
   };
 
   // Handle button click
-  const handleButtonClick = (num) => {
+  const handleButtonClick = async (num) => {
     if (!gameActive) return;
     if (num === clickedOrder.length + 1) {
       const newOrder = [...clickedOrder, num];
@@ -46,6 +70,21 @@ function ChimpGamePage() {
       if (newOrder.length === NUM_BUTTONS) {
         setGameActive(false);
         setScore(((Date.now() - startTime) / 1000).toFixed(2));
+        if (isAuthenticated) {
+            const res = await fetch(`${BACKEND_URL}/scores/chimp`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Include credentials for session management
+            body: JSON.stringify({ score: ((Date.now() - startTime) / 1000).toFixed(2) }), 
+          });
+          if (res.ok) {
+            console.log("Score submitted successfully");
+          } else {
+            console.error("Failed to submit score");
+          }
+        }
       }
     } else {
       // Wrong order, restart
@@ -92,7 +131,7 @@ function ChimpGamePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-100">
       <h1 className="text-4xl font-bold mb-4">Chimp Game</h1>
       <p className="text-lg mb-4 text-gray-700">
         Click the numbers in order from 1 to 10 as fast as you can!

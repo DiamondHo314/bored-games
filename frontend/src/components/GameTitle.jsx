@@ -1,6 +1,6 @@
 
 function GameTitle({ gameName }) {
-  const gametitle = gameName || "Coming Soon!";
+  const gametitle = gameName || "coming-soon";
   return (
     <div className="w-full flex justify-center my-4">
       <a

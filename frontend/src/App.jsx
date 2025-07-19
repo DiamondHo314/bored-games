@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage'
 import GameMenu from './pages/GameMenu'
 import PlayerProfile from './pages/PlayerProfile'
 import ChimpGamePage from './pages/ChimpGamePage'
+import NotFoundPage from './pages/NotFoundPage'
 import { Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
       <Route path="/" element={<GameMenu />} />
       <Route path="/profile" element={<PlayerProfile />} />
       <Route path="/chimp-game" element={<ChimpGamePage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

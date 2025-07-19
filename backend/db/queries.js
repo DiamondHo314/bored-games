@@ -17,8 +17,23 @@ async function getPlayerUsername(id) {
   return rows[0].username; // Return the username of the found user
 }
 
+async function addChimpGameScore(playerId, score){
+  await pool.query("INSERT INTO chimp_game_score (player_id, score) VALUES ($1, $2)", [playerId, score]);
+}
+
+async function getChimpGameScores(playerId) {
+  const { rows } = await pool.query("SELECT score FROM chimp_game_score WHERE player_id = $1 ORDER BY score ASC", [playerId]);
+  if (rows.length === 0) {
+    return []; // No scores found for the player
+  }
+  // Return an array of scores
+  return rows;
+}
+
 module.exports = { 
     registerUser,
     getUser,
     getPlayerUsername,
+    addChimpGameScore,
+    getChimpGameScores,
 }

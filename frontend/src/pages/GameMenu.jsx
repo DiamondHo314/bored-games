@@ -32,7 +32,6 @@ function GameMenu() {
     <div
       className="min-h-screen flex flex-col items-center justify-center"
       style={{
-        background: '#EEAECA',
         background: 'radial-gradient(circle,rgba(238, 174, 202, 1) 0%, rgba(148, 187, 233, 1) 100%)',
         color: 'white',
       }}
@@ -44,12 +43,14 @@ function GameMenu() {
         >
           {profileOrLogin}
         </Link>
-        <Link
-          to='/register'
-          className="bg-white bg-opacity-30 text-blue-700 font-semibold px-4 py-2 rounded-lg shadow hover:bg-opacity-50 transition"
-        >
-         Register 
-        </Link>
+        {profileOrLogin === "Login" && (
+          <Link
+            to='/register'
+            className="bg-white bg-opacity-30 text-blue-700 font-semibold px-4 py-2 rounded-lg shadow hover:bg-opacity-50 transition"
+          >
+          Register 
+          </Link>
+        )}
       </div>
       <h1 className="text-5xl font-extrabold mb-4 drop-shadow-lg">Game Menu</h1>
       <p className="mb-8 text-lg font-medium drop-shadow">
