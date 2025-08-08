@@ -58,7 +58,7 @@ function GameMenu() {
       </p>
       <div className="flex gap-8">
           <GameTitle gameName="chimp-game" />
-          <GameTitle  />
+          <GameTitle  gameName="typing-game"/>
           <GameTitle  />
       </div>
     </div>

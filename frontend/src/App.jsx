@@ -8,6 +8,7 @@ import GameMenu from './pages/GameMenu'
 import PlayerProfile from './pages/PlayerProfile'
 import ChimpGamePage from './pages/ChimpGamePage'
 import NotFoundPage from './pages/NotFoundPage'
+import TypingGamePage from './pages/TypingGamePage'
 import { Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
       <Route path="/" element={<GameMenu />} />
       <Route path="/profile" element={<PlayerProfile />} />
       <Route path="/chimp-game" element={<ChimpGamePage />} />
+      <Route path="/typing-game" element={<TypingGamePage />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
