@@ -1,11 +1,11 @@
 import  { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { checkAuth } from "../components/checkAuth";
 
 const BACKEND_URL = 'http://localhost:8080'; 
 const GRID_ROWS = 4;
 const GRID_COLS = 8;
 const NUM_BUTTONS = 10;
-
 
 
 function getRandomPositions() {
@@ -28,22 +28,11 @@ function ChimpGamePage() {
   //checking if there is any user logged in
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(`${BACKEND_URL}/login/checkAuth`, {
-          credentials: 'include',
-        });
-        if (res.ok) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        setIsAuthenticated(false);
-      }
+    const checkUserAuth = async () => {
+      const isAuth = await checkAuth();
+      setIsAuthenticated(isAuth);
     };
-  checkAuth();
+  checkUserAuth();
 }, []);
 
   // Start/restart game

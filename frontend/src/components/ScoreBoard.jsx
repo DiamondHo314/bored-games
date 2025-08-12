@@ -10,7 +10,7 @@ function ScoreBoard(props) {
         // Fetch the scoreboard data from the backend
         const fetchScores = async () => {
             try {
-                const res = await fetch(`${BACKEND_URL}/scores/chimp`, {
+                const res = await fetch(`${BACKEND_URL}/scores/${props.gamePath}`, {
                     credentials: 'include', // Include credentials for session management
                 });
                 if (res.ok) {
@@ -50,7 +50,7 @@ function ScoreBoard(props) {
                 className="cursor-pointer underline"
                 onClick={() => setShowPopup(true)}
             >
-                {props.gameTitle}
+                {props.gameTitle} Scores
             </a>
             {showPopup && (
                 <div
@@ -62,6 +62,7 @@ function ScoreBoard(props) {
                     <div
                         ref={popupRef}
                         className="bg-white p-6 rounded-lg min-w-[320px] shadow-lg"
+                        style={{ width: '380px', maxWidth: '95vw', height: '420px', maxHeight: '90vh' }}
                     >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="m-0 text-lg font-semibold">{props.gameTitle} Scores</h2>
@@ -72,28 +73,30 @@ function ScoreBoard(props) {
                                 ×
                             </button>
                         </div>
-                        <table className="w-full mt-2 border-collapse">
-                            <thead>
-                                <tr>
-                                    <th className="border-b text-center p-2">Sl.</th>
-                                    <th className="border-b text-center p-2">Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {scoreboardData.length === 0 ? (
+                        <div style={{ height: '320px', overflowY: 'auto' }}>
+                            <table className="w-full mt-2 border-collapse">
+                                <thead>
                                     <tr>
-                                        <td colSpan={2} className="p-2 text-center">No scores yet.</td>
+                                        <th className="border-b text-center p-2">Sl.</th>
+                                        <th className="border-b text-center p-2">Score</th>
                                     </tr>
-                                ) : (
-                                    scoreboardData.map((row, idx) => (
-                                        <tr key={idx}>
-                                            <td className="p-2 border-b">{idx + 1}</td>
-                                            <td className="p-2 border-b">{row.score}s</td>
+                                </thead>
+                                <tbody>
+                                    {scoreboardData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={2} className="p-2 text-center">No scores yet.</td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        scoreboardData.map((row, idx) => (
+                                            <tr key={idx}>
+                                                <td className="p-2 border-b">{idx + 1}</td>
+                                                <td className="p-2 border-b">{row.score}s</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

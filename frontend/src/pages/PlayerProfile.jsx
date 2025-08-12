@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import ScoreBoard from '../components/ScoreBoard';
+import TypingGameScoreboard from '../components/TypingGameScoreboard';
 
 function PlayerProfile() {
   const [playerName, setPlayerName] = useState('');
@@ -50,7 +51,13 @@ function PlayerProfile() {
         </p>
         <div>
           <ScoreBoard 
-            gameTitle="Chimp Game Scores"
+            gameTitle="Chimp Game"
+            gamePath = "chimp"
+          />
+        </div>
+        <div>
+          <TypingGameScoreboard 
+            gameTitle="Typing Game"
           />
         </div>
         <div>

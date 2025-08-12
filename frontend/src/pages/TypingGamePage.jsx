@@ -1,7 +1,66 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { checkAuth } from "../components/checkAuth";
 
 const BACKEND_URL = 'http://localhost:8080';
+
+function correctCounter(typedWords, sentenceWords) {
+  let correctCount = 0;
+  const wrongWords = [];
+  for (let i = 0; i < Math.min(typedWords.length, sentenceWords.length); i++) {
+    // we need the min because typedwords can be longer or shorter than the words in the sentence
+    // if the word is correct, increase the count
+    if (typedWords[i] === sentenceWords[i]) {
+      correctCount++;
+    } else {
+      wrongWords.push(sentenceWords[i]); // add the original word that the user got wrong
+    }
+  }
+  return [correctCount, wrongWords];
+}
+
+async function postTypingGameScore(timerOption, wpm, acc) {
+  return await fetch(`${BACKEND_URL}/scores/typing`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Include credentials for session management
+    body: JSON.stringify({ timerOption, wpm, acc }),
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Failed to post typing game score");
+    }
+    return res.json();
+  })
+  .catch(error => {
+    console.error("Error posting typing game score:", error);
+    throw error;
+  });
+}
+
+//post wrong words to the database
+async function postWrongWords(wrongWords) {
+  return await fetch(`${BACKEND_URL}/sentences/wrong`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', 
+    body: JSON.stringify({ wrongWords }),
+  })
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Failed to post wrong words");
+    }
+    return res.json();
+  })
+  .catch(error => {
+    console.error("Error posting wrong words:", error);
+    throw error;
+  });
+}
 
 function TypingGamePage() {
   // Game states
@@ -14,7 +73,17 @@ function TypingGamePage() {
   const [correctWords, setCorrectWords] = useState(0);
   const [totalWords, setTotalWords] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [wrongWords, setWrongWords] = useState([]);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    async function checkUserAuth() {
+      const isAuth = await checkAuth();
+      setIsAuthenticated(isAuth);
+    }
+    checkUserAuth();
+  }, []);
 
   // Load sentences from assets/sentences.txt (fix fetch path and error handling)
   useEffect(() => {
@@ -33,6 +102,7 @@ function TypingGamePage() {
     getSentences();
  }, []);
 
+
   // Reset timer when option changes
   useEffect(() => {
     setTimeLeft(timerOption);
@@ -42,10 +112,21 @@ function TypingGamePage() {
   useEffect(() => {
     if (gameState !== "running") return;
     if (timeLeft <= 0) {
+      if (currentSentence && typed.length > 0) {
+      const typedWords = typed.trim().split(/\s+/);
+      const sentenceWords = currentSentence.trim().split(/\s+/);
+
+      const correctCount = correctCounter(typedWords, sentenceWords)[0];
+
+      setCorrectWords((w) => w + correctCount);
+      setTotalWords((w) => w + sentenceWords.length);
+
       setGameState("finished");
+      
       setShowResult(true);
       return;
     }
+  }
     const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     return () => clearTimeout(timer);
   }, [gameState, timeLeft]);
@@ -97,38 +178,38 @@ function TypingGamePage() {
     if (typed.length >= currentSentence.length) return;
 
     setTyped((prev) => prev + e.key);
-    console.log('typed letter:', typed)
+    //console.log('typed letter:', typed)
+    // typed proceeds like:
+    // typed letter: T
+    // typed letter: Th
+    // typed letter: The
 
     // If sentence finished
-    if (typed.length + 1 === currentSentence.length) {
-      // Check correctness
-      let correct = true;
-      let i = 1;
-      while ( i < currentSentence.length+1) {
-        if ((typed + e.key)[i] !== currentSentence[i]) {
-          correct = false;
-          break;
-        }
-        if (e.key === "Backspace") {
-          i--;
-          correct = true;
-          continue;
-        }
-        i++;
-      }
-      setTotalWords((w) => w + currentSentence.trim().split(/\s+/).length);
-      if (correct) {
-        setCorrectWords((w) => w + currentSentence.trim().split(/\s+/).length); 
-        // the "/\s+/" basically splits the sentence by whitespaces (spaces, tabs), regex  
-      }
+    if (typed.length + 1 === currentSentence.length || gameState === "finished") {
+      // Split both typed and original sentences into an array of words
+      const typedWords = (typed + e.key).trim().split(/\s+/);
+      const sentenceWords = currentSentence.trim().split(/\s+/);
+
+      // Count correct words
+      const correctCount = correctCounter(typedWords, sentenceWords);
+
+      console.log(correctCount[1])
+      setWrongWords((w) => [...w, ...correctCount[1]]);
+      
+      setCorrectWords((w) => w + correctCount[0]);
+      setTotalWords((w) => w + sentenceWords.length);
+      
       setTimeout(() => {
         loadRandomSentence();
       }, 100);
     }
-  };
+  }
 
-  // WPM calculation
-  const wpm = (correctWords / timerOption) * 60;
+
+  // WPM calculation (always integer)
+  const wpm = Math.floor((correctWords / timerOption) * 60);
+  // Accuracy calculation (percentage, avoid division by zero)
+  const accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
 
   //restart game
   const handleRestart = () => {
@@ -164,6 +245,21 @@ function TypingGamePage() {
       </div>
     );
   };
+
+  //post the score once a game is finished only if a user is logged in
+  useEffect(() => {
+    if (gameState === "finished" && isAuthenticated) {
+        postTypingGameScore(timerOption, wpm, accuracy)
+        postWrongWords(wrongWords)
+        .then(() => {
+          console.log("Typing game score and wrong words posted successfully");
+        })
+        .catch((error) => {
+          console.error("Error posting typing game score:", error);
+        });
+      }
+  }, [gameState, isAuthenticated, timerOption, wpm, accuracy, wrongWords]);
+  
 
   return (
     <div
@@ -236,20 +332,27 @@ function TypingGamePage() {
             backdropFilter: "blur(6px)"
           }}
         >
-          <div className="bg-white rounded-lg p-8 shadow-lg text-center">
+          <div className="bg-white rounded-lg p-8 shadow-lg text-center relative">
+            {/* Move the close button to the top right */}
+            <button
+              onClick={handleRestart}
+              className="absolute top-2 right-2 font-bold cursor-pointer hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center"
+              aria-label="Close"
+            >
+              ×
+            </button>
             <div className="text-3xl font-bold mb-2">Your WPM</div>
             <div className="text-5xl font-extrabold mb-4">{wpm}</div>
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-              onClick={handleRestart}
-            >
-              Restart
-            </button>
+            <div className="text-xl font-semibold mb-2 text-gray-700">
+              Accuracy: {accuracy}%
+            </div>
+            
           </div>
         </div>
       )}
     </div>
   );
 }
+
 
 export default TypingGamePage;
