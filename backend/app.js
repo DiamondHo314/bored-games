@@ -10,6 +10,7 @@ const playerProfileRouter = require('./routes/playerProfileRouter');
 const loginRouter = require('./routes/loginRouter');
 const scoreRouter = require('./routes/scoreRouter');
 const sentenceRouter = require('./routes/sentenceRouter');
+const geminiRouter = require('./routes/geminiRouter');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json())
@@ -30,6 +31,7 @@ app.use('/profile', playerProfileRouter)
 app.use('/login', loginRouter)
 app.use('/scores', scoreRouter)
 app.use('/sentences', sentenceRouter)
+app.use('/ai-typing-coach', geminiRouter);
 
 app.listen(8080, () => {
   console.log('Server is running on http://localhost:8080');

@@ -46,35 +46,41 @@ function TypingGameScoreboard({ gameTitle = "Typing Game" }) {
         };
     }, [showPopup]);
 
-    const renderTable = (label, rows, wpmKey, accKey) => (
-        <div className="mb-6">
-            <h3 className="font-semibold mb-2">{label}</h3>
-            <table className="w-full border-collapse mb-2">
-                <thead>
-                    <tr>
-                        <th className="border-b p-2 text-center">Sl.</th>
-                        <th className="border-b p-2 text-center">WPM</th>
-                        <th className="border-b p-2 text-center">Accuracy (%)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.length === 0 || rows.every(row => row[wpmKey] == null && row[accKey] == null) ? (
+    const renderTable = (label, rows, wpmKey, accKey) => {
+        // Filter out rows where both WPM and accuracy are null or undefined
+        const filteredRows = rows.filter(
+            row => row[wpmKey] != null || row[accKey] != null
+        );
+        return (
+            <div className="mb-6">
+                <h3 className="font-semibold mb-2">{label}</h3>
+                <table className="w-full border-collapse mb-2">
+                    <thead>
                         <tr>
-                            <td colSpan={3} className="p-2 text-center">No scores yet.</td>
+                            <th className="border-b p-2 text-center">Sl.</th>
+                            <th className="border-b p-2 text-center">WPM</th>
+                            <th className="border-b p-2 text-center">Accuracy (%)</th>
                         </tr>
-                    ) : (
-                        rows.map((row, idx) => (
-                            <tr key={idx}>
-                                <td className="p-2 border-b text-center">{idx + 1}</td>
-                                <td className="p-2 border-b text-center">{row[wpmKey] !== null ? row[wpmKey] : '-'}</td>
-                                <td className="p-2 border-b text-center">{row[accKey] !== null ? row[accKey] : '-'}</td>
+                    </thead>
+                    <tbody>
+                        {filteredRows.length === 0 ? (
+                            <tr>
+                                <td colSpan={3} className="p-2 text-center">No scores yet.</td>
                             </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
+                        ) : (
+                            filteredRows.map((row, idx) => (
+                                <tr key={idx}>
+                                    <td className="p-2 border-b text-center">{idx + 1}</td>
+                                    <td className="p-2 border-b text-center">{row[wpmKey] !== null ? row[wpmKey] : '-'}</td>
+                                    <td className="p-2 border-b text-center">{row[accKey] !== null ? row[accKey] : '-'}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
         <div>

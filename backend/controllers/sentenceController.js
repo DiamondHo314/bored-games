@@ -41,8 +41,10 @@ const getWrongWords = async (req, res) => {
   } catch (error) {
     console.error("Error retrieving wrong words:", error);
     res.status(500).json({ error: "Internal server error" });
-  }
+  } 
 }
+
+
 
 module.exports = {
   getSentences,

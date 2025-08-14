@@ -1,66 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { checkAuth } from "../components/checkAuth";
+import { correctCounter, postTypingGameScore, postWrongWords, aiGenerateSentence } from "../components/typFunctions";
+import { LoadingScreen } from "../components/LoadingScreen";
 
 const BACKEND_URL = 'http://localhost:8080';
-
-function correctCounter(typedWords, sentenceWords) {
-  let correctCount = 0;
-  const wrongWords = [];
-  for (let i = 0; i < Math.min(typedWords.length, sentenceWords.length); i++) {
-    // we need the min because typedwords can be longer or shorter than the words in the sentence
-    // if the word is correct, increase the count
-    if (typedWords[i] === sentenceWords[i]) {
-      correctCount++;
-    } else {
-      wrongWords.push(sentenceWords[i]); // add the original word that the user got wrong
-    }
-  }
-  return [correctCount, wrongWords];
-}
-
-async function postTypingGameScore(timerOption, wpm, acc) {
-  return await fetch(`${BACKEND_URL}/scores/typing`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include', // Include credentials for session management
-    body: JSON.stringify({ timerOption, wpm, acc }),
-  })
-  .then(res => {
-    if (!res.ok) {
-      throw new Error("Failed to post typing game score");
-    }
-    return res.json();
-  })
-  .catch(error => {
-    console.error("Error posting typing game score:", error);
-    throw error;
-  });
-}
-
-//post wrong words to the database
-async function postWrongWords(wrongWords) {
-  return await fetch(`${BACKEND_URL}/sentences/wrong`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include', 
-    body: JSON.stringify({ wrongWords }),
-  })
-  .then(res => {
-    if (!res.ok) {
-      throw new Error("Failed to post wrong words");
-    }
-    return res.json();
-  })
-  .catch(error => {
-    console.error("Error posting wrong words:", error);
-    throw error;
-  });
-}
 
 function TypingGamePage() {
   // Game states
@@ -75,6 +19,9 @@ function TypingGamePage() {
   const [showResult, setShowResult] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [wrongWords, setWrongWords] = useState([]);
+  const [aiEnabledText, setAiEnabledText] = useState("");
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [weakLetters, setWeakLetters] = useState("");
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -111,6 +58,11 @@ function TypingGamePage() {
   // Timer logic
   useEffect(() => {
     if (gameState !== "running") return;
+    if (aiEnabledText !== "") {
+      console.log("AI mode enabled, setting weak letters");
+    } else {
+      console.log("AI mode disabled");
+    }
     if (timeLeft <= 0) {
       if (currentSentence && typed.length > 0) {
       const typedWords = typed.trim().split(/\s+/);
@@ -121,11 +73,12 @@ function TypingGamePage() {
       setCorrectWords((w) => w + correctCount);
       setTotalWords((w) => w + sentenceWords.length);
 
-      setGameState("finished");
-      
-      setShowResult(true);
-      return;
+      //setShowResult(true); // idfk the results weren't showing up in some cases idfk i hate this
     }
+    setGameState("finished");
+    setShowResult(true);
+    return;
+    //setShowResult(true);
   }
     const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
     return () => clearTimeout(timer);
@@ -151,11 +104,34 @@ function TypingGamePage() {
 
   // Load a random sentence
   const loadRandomSentence = () => {
+    if(aiEnabledText !== "") {
+      setWeakLetters(sentences[0]) //because i told the ai to give the users weak letters in the first sentence
+    }
     if (sentences.length === 0) return;
     const idx = Math.floor(Math.random() * sentences.length);
-    setCurrentSentence(sentences[idx]);
+    if(idx === 0){
+      setCurrentSentence("skibidi sigma will tax your mom rizzler of oz huge gyatt sybau ts pmo")
+    } else setCurrentSentence(sentences[idx]);
     setTyped("");
   };
+
+  // set sentence to ai generated one when user clicks ai coach
+  const handleAiCoach = async () => {
+    setAiEnabledText("AI generated custom sentences")
+    setIsLoadingAi(true);
+    handleRestart();
+    try {
+      const response = await aiGenerateSentence();
+      if (response && response.length > 0) {
+        setSentences(response); // Set the first AI-generated sentence
+        console.log("AI sentences loaded:", response);
+      }
+    } catch (error) {
+      console.error("Error generating AI sentence:", error);
+    } finally {
+      setIsLoadingAi(false);
+    }
+  }
 
   // Handle typing
   const handleKeyDown = (e) => {
@@ -222,6 +198,10 @@ function TypingGamePage() {
     setTotalWords(0);
   };
 
+  const handleRefreshPage = () => {
+    window.location.reload();
+  }
+
   // Render sentence with highlights
   const renderSentence = () => {
     return (
@@ -248,7 +228,9 @@ function TypingGamePage() {
 
   //post the score once a game is finished only if a user is logged in
   useEffect(() => {
-    if (gameState === "finished" && isAuthenticated) {
+    if (gameState === "finished") {
+      if (isAuthenticated) {
+        console.log(wrongWords)
         postTypingGameScore(timerOption, wpm, accuracy)
         postWrongWords(wrongWords)
         .then(() => {
@@ -258,6 +240,7 @@ function TypingGamePage() {
           console.error("Error posting typing game score:", error);
         });
       }
+    }
   }, [gameState, isAuthenticated, timerOption, wpm, accuracy, wrongWords]);
   
 
@@ -270,9 +253,20 @@ function TypingGamePage() {
     >
       <div className="absolute top-6 left-10 flex gap-4 text-blue-300">
         <Link to="/">
+          <button className="bg-blue-800  text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-blue-900 transition cursor-pointer">
             Back to Menu
+          </button>
         </Link>
       </div>
+      {isLoadingAi && <LoadingScreen />}
+      {(aiEnabledText !== "") && (
+      <div className="absolute top-6 right-10 flex gap-4">
+        <button
+          className="bg-green-900 text-white font-mono font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-950 cursor-pointer"
+          onClick={handleRefreshPage}
+          >Disable AI mode</button>
+      </div>
+      )}
       {/* Heading at top center */}
       <div className="w-full pt-8 pb-2 flex flex-col items-center">
         <h1 className="text-4xl font-bold mb-2 text-center text-white">Typing Challenge</h1>
@@ -310,7 +304,7 @@ function TypingGamePage() {
       <div className="text-center pl-4 pt-2 text-white">
         {gameState === "waiting" && (
           <div className="mt-5 mb-4 text-lg text-gray-200">
-            Press any key to start!
+            Press any key to start {aiEnabledText}!
           </div>
         )}
         {gameState === "running" && renderSentence()}
@@ -323,6 +317,17 @@ function TypingGamePage() {
         value=""
         readOnly
       />
+      <div className="absolute text-center bottom-25 left-1/2 transform -translate-x-1/2">
+        <p className="text-lg text-white">{weakLetters}</p>
+      </div>
+      {isAuthenticated && (
+        <div className="absolute text-center bottom-10 left-1/2 transform -translate-x-1/2">
+          <button
+            className="bg-yellow-400 bg-opacity-30 font-mono font-semibold px-4 py-2 rounded-lg shadow hover:bg-yellow-500 cursor-pointer"
+            onClick={handleAiCoach}
+          >🤖 custom sentences made by AI coach mode</button>
+        </div>
+      )}
       {/* Result popup with dark, blurred overlay */}
       {showResult && (
         <div

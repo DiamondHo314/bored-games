@@ -120,14 +120,16 @@ function ChimpGamePage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-blue-100">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-yellow-200">
       <h1 className="text-4xl font-bold mb-4">Chimp Game</h1>
       <p className="text-lg mb-4 text-gray-700">
         Click the numbers in order from 1 to 10 as fast as you can!
       </p>
       <div className="absolute top-6 left-10 flex gap-4">
         <Link to="/">
+          <button className="bg-blue-800  text-white font-semibold px-4 py-2 rounded-lg shadow hover:bg-blue-900 transition cursor-pointer">
             Back to Menu
+          </button>
         </Link>
       </div>
       <div
@@ -147,7 +149,7 @@ function ChimpGamePage() {
             Time: {elapsed}s
           </span>
         ) : score !== null ? (
-          <span className="text-2xl font-semibold text-green-600 mb-2">
+          <span className="text-2xl font-semibold text-green-700 mb-2">
             Score: {score} seconds!
           </span>
         ) : null}
