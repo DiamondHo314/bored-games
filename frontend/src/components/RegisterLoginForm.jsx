@@ -7,7 +7,7 @@ function RegisterLoginForm({ headingText, ...props }) {
   let footerAction = "Register";
   if (props.isRegisterPage) {
    footerText = "Back to "; 
-   footerLink = "/";
+   footerLink = "/login";
    footerAction = "login";
   }
 
@@ -15,10 +15,12 @@ function RegisterLoginForm({ headingText, ...props }) {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setErrorMsg("")
     const res = await fetch(`${BACKEND_URL}/register`, {
       method: 'POST',
       headers: {
@@ -31,12 +33,14 @@ function RegisterLoginForm({ headingText, ...props }) {
       // Redirect to the home page or login page
       navigate("/login"); // Use Navigate to redirect
     } else {
+      setErrorMsg("Registration failed. Please try again.");
       console.error("Registration failed");
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setErrorMsg("")
     const res = await fetch(`${BACKEND_URL}/login`, {
       method: 'POST',
       headers: {
@@ -50,6 +54,7 @@ function RegisterLoginForm({ headingText, ...props }) {
       // Redirect to the player profile or home page
       navigate("/profile"); // Use Navigate to redirect
     } else {
+      setErrorMsg("Login failed. Please check your credentials.");
       console.error("Login failed");
     }
   };
@@ -72,7 +77,11 @@ function RegisterLoginForm({ headingText, ...props }) {
         <h1 className="text-center text-2xl font-bold text-blue-700 mb-5">
           {headingText || "Login"}
           </h1>
-         
+          {errorMsg && (
+          <div className="text-red-500 text-center mb-4">
+            {errorMsg}
+          </div>
+        )}
           <div>
             <label className="block text-blue-700 font-bold mb-2 tracking-wide">
               Username
@@ -80,7 +89,7 @@ function RegisterLoginForm({ headingText, ...props }) {
             <input
               type="text"
               name="username"
-              className="w-full px-5 py-3 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
+              className="w-full px-4 py-2 border-2 border-pink-300 rounded-md focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
               autoComplete="username"
               required
               onChange={(e) => setUsername(e.target.value)} // Handle username input
@@ -93,7 +102,7 @@ function RegisterLoginForm({ headingText, ...props }) {
             <input
               type="password"
               name="password"
-              className="w-full px-5 py-3 border-2 border-pink-300 rounded-full focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
+              className="w-full px-4 py-2 border-2 border-pink-300 rounded-md focus:outline-none focus:ring-4 focus:ring-yellow-200 bg-pink-50 text-lg transition"
               autoComplete="current-password"
               onChange={(e) => setPassword(e.target.value)} // Handle password input}
               required
